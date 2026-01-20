@@ -28,7 +28,7 @@ func register_ability(ability: AbilityBase) -> void:
 	ability.ability_owner = _owner
 
 
-func use_ability(ability_name: String, target: Node = null, cursor_world: Vector2 | null = null) -> bool:
+func use_ability(ability_name: String, target: Node = null, cursor_world = null) -> bool:
 	if not _abilities.has(ability_name):
 		ability_failed.emit(ability_name, "Unknown ability")
 		return false
