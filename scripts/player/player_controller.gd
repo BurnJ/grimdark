@@ -370,6 +370,10 @@ func get_attack_range() -> float:
 	return 0.0
 
 
+func get_attack_target() -> Node2D:
+	return _attack_target
+
+
 # =============================================================================
 # HEALTH & DAMAGE METHODS
 # =============================================================================
