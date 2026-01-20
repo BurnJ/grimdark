@@ -6,7 +6,6 @@ signal path_completed
 signal direction_changed(new_direction: Direction)
 signal movement_started
 signal movement_stopped
-signal attack_target_set(target: Node2D)
 signal player_died
 signal player_respawned
 
@@ -32,9 +31,10 @@ var current_direction: Direction = Direction.S
 var _direction_angle_cache: float = PI / 2
 var _is_moving: bool = false
 
-# Combat state
-var _attack_target: Node2D = null
-var _is_approaching_target: bool = false
+# Combat state - Action Combat (Diablo-style)
+var _right_mouse_held: bool = false
+var _attack_requested: bool = false
+var _last_cursor_world: Vector2 = Vector2.ZERO
 
 
 func _ready() -> void:
@@ -66,6 +66,19 @@ func _physics_process(delta: float) -> void:
 	if velocity.length_squared() > 1.0:
 		_update_direction(velocity.normalized())
 
+	# Execute pending attack after movement
+	if _attack_requested:
+		_execute_immediate_attack()
+		_attack_requested = false
+
+
+func _process(_delta: float) -> void:
+	# Continuous fire support - hold right-click to attack repeatedly
+	if _right_mouse_held:
+		var basic_strike := ability_system.get_ability("basic_strike") as BasicStrike
+		if basic_strike and basic_strike.can_use():
+			_attack_requested = true
+
 
 func _input(event: InputEvent) -> void:
 	if health and health.is_dead:
@@ -73,12 +86,16 @@ func _input(event: InputEvent) -> void:
 
 	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
-		if mouse_event.pressed:
-			if mouse_event.button_index == MOUSE_BUTTON_LEFT:
-				_clear_attack_target()
-				_handle_click(get_global_mouse_position())
-			elif mouse_event.button_index == MOUSE_BUTTON_RIGHT:
-				_handle_right_click(get_global_mouse_position())
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+			_handle_click(get_global_mouse_position())
+		elif mouse_event.button_index == MOUSE_BUTTON_RIGHT:
+			# Track held state for continuous fire
+			if mouse_event.pressed:
+				_right_mouse_held = true
+				_last_cursor_world = get_global_mouse_position()
+				_attack_requested = true  # Immediate first attack
+			else:
+				_right_mouse_held = false
 
 	# Run/walk toggle (R key)
 	if event is InputEventKey:
@@ -226,10 +243,6 @@ func _process_movement(delta: float) -> void:
 		_current_speed_factor = 0.0
 		path_completed.emit()
 		movement_stopped.emit()
-
-		# Check if we were approaching an attack target
-		if _is_approaching_target:
-			_try_execute_attack_on_arrival()
 		return
 
 	# Get current target waypoint
@@ -245,10 +258,6 @@ func _process_movement(delta: float) -> void:
 			_current_speed_factor = 0.0
 			path_completed.emit()
 			movement_stopped.emit()
-
-			# Check if we were approaching an attack target
-			if _is_approaching_target:
-				_try_execute_attack_on_arrival()
 			return
 		current_target = current_path[0]
 
@@ -330,121 +339,35 @@ func _update_sprite_color() -> void:
 
 
 # =============================================================================
-# COMBAT METHODS
+# COMBAT METHODS - Action Combat (Diablo-style)
 # =============================================================================
 
-func _handle_right_click(click_pos: Vector2) -> void:
-	# Check if clicked on an enemy
-	var enemy := _find_enemy_at_position(click_pos)
-	if enemy:
-		_set_attack_target(enemy)
-
-
-func _find_enemy_at_position(pos: Vector2) -> Node2D:
-	# Use physics query to find hurtboxes at click position
-	var space_state := get_world_2d().direct_space_state
-	var query := PhysicsPointQueryParameters2D.new()
-	query.position = pos
-	query.collide_with_areas = true
-	query.collision_mask = 0xFFFFFFFF  # Check all layers
-
-	var results := space_state.intersect_point(query)
-	for result in results:
-		var collider: Object = result.collider
-		if collider is HurtboxComponent:
-			var hurtbox_comp := collider as HurtboxComponent
-			# Check if it's an enemy (team != 0)
-			if hurtbox_comp.team != 0:
-				var parent: Node = collider.get_parent()
-				if parent is Node2D:
-					return parent as Node2D
-	return null
-
-
-func _set_attack_target(target: Node2D) -> void:
-	_attack_target = target
-	attack_target_set.emit(target)
-
-	# Check if in range for Basic Strike
-	var distance := _get_distance_to_target(target)
-	var basic_strike := ability_system.get_ability("basic_strike") as BasicStrike
-
-	if basic_strike and distance <= basic_strike.reach_tiles:
-		# In range - attack immediately
-		_execute_attack()
-	else:
-		# Out of range - approach then attack
-		_approach_and_attack(target)
-
-
-func _approach_and_attack(target: Node2D) -> void:
-	_is_approaching_target = true
-	_handle_click(target.global_position)
-
-
-func _try_execute_attack_on_arrival() -> void:
-	if not _attack_target or not is_instance_valid(_attack_target):
-		_clear_attack_target()
+func _execute_immediate_attack() -> void:
+	if not ability_system:
 		return
 
-	var distance := _get_distance_to_target(_attack_target)
 	var basic_strike := ability_system.get_ability("basic_strike") as BasicStrike
-
-	if basic_strike and distance <= basic_strike.reach_tiles * 1.5:
-		# Close enough - execute attack
-		_execute_attack()
-	else:
-		# Still not close enough - try approaching again
-		_approach_and_attack(_attack_target)
-
-
-func _execute_attack() -> void:
-	if not _attack_target or not is_instance_valid(_attack_target):
-		_clear_attack_target()
+	if not basic_strike or not basic_strike.can_use():
 		return
 
-	# Get the target's hurtbox for the ability
-	var target_hurtbox: HurtboxComponent = null
-	if _attack_target.has_node("HurtboxComponent"):
-		target_hurtbox = _attack_target.get_node("HurtboxComponent")
+	# Stop any ongoing movement
+	stop_movement()
 
-	if target_hurtbox:
-		# Pass the last click position as cursor_world so abilities can prefer cursor selection
-		var cursor_pos := final_destination if final_destination != Vector2.ZERO else target_hurtbox.get_center_world()
-		ability_system.use_ability("basic_strike", target_hurtbox, cursor_pos)
+	# Update facing direction toward cursor
+	var attack_direction := (_last_cursor_world - global_position).normalized()
+	if attack_direction.length_squared() > 0.001:
+		_update_direction(attack_direction)
 
-	_clear_attack_target()
-
-
-func _clear_attack_target() -> void:
-	_attack_target = null
-	_is_approaching_target = false
+	# Pass null target and cursor position for Smart Hit targeting
+	ability_system.use_ability("basic_strike", null, _last_cursor_world)
 
 
-func _get_distance_to_target(target: Node2D) -> float:
-	return DistanceConverter.world_distance_in_tiles(global_position, target.global_position)
-
-
-# =============================================================================
-# COMBAT DEBUG / QUERY METHODS
-# =============================================================================
-
-## Get the current attack target (for debug visualization)
-func get_attack_target() -> Node2D:
-	return _attack_target
-
-
-## Get current attack range in tiles (for debug visualization)
+## Debug / query helpers used by visualization tools
 func get_attack_range() -> float:
 	var basic_strike := ability_system.get_ability("basic_strike") as BasicStrike
 	if basic_strike:
 		return basic_strike.reach_tiles
 	return 0.0
-
-
-## Check if player is currently approaching an attack target
-func is_approaching_attack_target() -> bool:
-	return _is_approaching_target
 
 
 # =============================================================================
@@ -467,7 +390,6 @@ func _on_damage_taken(_amount: int, _source: Node) -> void:
 func _on_died() -> void:
 	player_died.emit()
 	stop_movement()
-	_clear_attack_target()
 
 	# Brief death pause then respawn
 	await get_tree().create_timer(1.0).timeout
