@@ -6,7 +6,7 @@ class_name EnemyController
 signal died(enemy: EnemyController)
 
 @export var enemy_name: String = "Enemy"
-@export var move_speed_tiles: float = 1.2
+@export var move_speed_tiles: float = 1.0
 
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var hurtbox: HurtboxComponent = $HurtboxComponent

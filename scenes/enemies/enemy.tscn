@@ -30,7 +30,7 @@ shape = SubResource("CapsuleShape2D_1")
 
 [node name="HurtboxComponent" type="Area2D" parent="."]
 script = ExtResource("2_hurtbox")
-radius_tiles = 0.25
+radius_tiles = 0.2
 team = 1
 
 [node name="HealthComponent" type="Node" parent="."]
