@@ -1,0 +1,17 @@
+name: PR Check
+
+on:
+  pull_request:
+    branches:
+      - master
+      - testing
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Godot (placeholder)
+        run: echo "This job is a placeholder — replace with real Godot build steps if needed"
+      - name: Lint / Quick checks
+        run: echo "No lint configured. Add your checks here."
