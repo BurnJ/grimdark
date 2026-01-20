@@ -39,7 +39,7 @@ func _create_hitbox() -> void:
 	_hitbox.deactivate()
 
 
-func execute(target: Node = null, cursor_world: Vector2 = null) -> void:
+func execute(target: Node = null, cursor_world: Vector2 | null = null) -> void:
 	if not ability_owner:
 		return
 
