@@ -8,8 +8,10 @@ signal strike_missed
 signal debug_attack_shape(shape: Shape2D, position: Vector2, rotation: float)
 
 @export var damage: float = 15.0
+@export var damage: float = 15.0
 @export var reach_tiles: float = 1.0  ## Increased reach so tile-centered entities can hit each other
-@export var attack_width_tiles: float = 0.25
+@export var attack_width_tiles: float = 0.5  # Wider detection to make aiming less fussy
+@export var selection_mode: String = "closest_cursor"  # closest_cursor or closest_center
 
 ## Future sweep properties (prepared but not active by default)
 @export var is_sweep: bool = false
@@ -38,7 +40,7 @@ func _create_hitbox() -> void:
 	_hitbox.deactivate()
 
 
-func execute(target: Node = null) -> void:
+func execute(target: Node = null, cursor_world: Vector2 = null) -> void:
 	if not ability_owner:
 		return
 
@@ -91,9 +93,30 @@ func execute(target: Node = null) -> void:
 	var hits := _hitbox.get_hit_entities()
 	_hitbox.deactivate()
 
+	# Select a single target according to selection_mode
 	if hits.size() > 0:
-		for hit in hits:
-			strike_hit.emit(hit)
+		var chosen: HurtboxComponent = null
+		if cursor_world != null and selection_mode == "closest_cursor":
+			# pick the hit whose center is closest to the cursor
+			var best_dist := 1e9
+			for h in hits:
+				var d := h.get_center_world().distance_to(cursor_world)
+				if d < best_dist:
+					best_dist = d
+					chosen = h
+		else:
+			# pick the hit whose center is closest to the attacker
+			var best_dist2 := 1e9
+			for h in hits:
+				var d2 := h.get_center_world().distance_to(ability_owner.global_position)
+				if d2 < best_dist2:
+					best_dist2 = d2
+					chosen = h
+
+		if chosen:
+			strike_hit.emit(chosen)
+			# Apply damage to the chosen target
+			chosen.receive_damage(damage, "physical", ability_owner)
 	else:
 		strike_missed.emit()
 

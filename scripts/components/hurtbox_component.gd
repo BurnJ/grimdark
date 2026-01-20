@@ -8,7 +8,7 @@ signal damage_received(amount: float, type: String, source: Node)
 signal entered_aoe(aoe_source: Area2D)
 signal exited_aoe(aoe_source: Area2D)
 
-@export var radius_tiles: float = 0.25  ## Default: 0.25 tiles = 32 pixels
+@export var radius_tiles: float = 0.2  ## Default: 0.2 tiles = 25.6 pixels
 @export var team: int = 0  ## For friendly fire filtering (0 = player, 1 = enemy, etc.)
 
 var _collision_shape: CollisionShape2D
@@ -45,6 +45,11 @@ func get_radius_pixels() -> float:
 ## Get the radius in tiles (for game logic)
 func get_radius_tiles() -> float:
 	return radius_tiles
+
+
+## Static accessor for default hurtbox radius (useful for systems that can't access an instance)
+static func get_default_radius_tiles() -> float:
+	return 0.2
 
 
 ## Get the center position in world coordinates

@@ -22,7 +22,7 @@ const PLAYER_COLLISION_RADIUS := 16.0  # pixels (legacy)
 const ENEMY_COLLISION_RADIUS := 14.0   # pixels (legacy)
 const PUSH_FORCE := 50.0  # Gentle push between entities
 
-# Tile-based radii for distance framework
-const PLAYER_HURTBOX_RADIUS_TILES := 0.125   # 16 pixels
-const ENEMY_HURTBOX_RADIUS_TILES := 0.109    # ~14 pixels
-const DEFAULT_HURTBOX_RADIUS_TILES := 0.25   # Standard entity radius
+# Note: hurtbox radii are now defined on the HurtboxComponent (single source of truth)
+# Legacy pixel radii retained for other systems
+const PLAYER_HURTBOX_RADIUS_PIXELS := 16.0
+const ENEMY_HURTBOX_RADIUS_PIXELS := 14.0
