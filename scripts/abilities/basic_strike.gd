@@ -8,7 +8,6 @@ signal strike_missed
 signal debug_attack_shape(shape: Shape2D, position: Vector2, rotation: float)
 
 @export var damage: float = 15.0
-@export var damage: float = 15.0
 @export var reach_tiles: float = 1.0  ## Increased reach so tile-centered entities can hit each other
 @export var attack_width_tiles: float = 0.5  # Wider detection to make aiming less fussy
 @export var selection_mode: String = "closest_cursor"  # closest_cursor or closest_center
@@ -40,7 +39,7 @@ func _create_hitbox() -> void:
 	_hitbox.deactivate()
 
 
-func execute(target: Node = null, cursor_world: Vector2 = null) -> void:
+func execute(target: Node = null, cursor_world = null) -> void:
 	if not ability_owner:
 		return
 

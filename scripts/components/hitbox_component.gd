@@ -26,8 +26,11 @@ func _ready() -> void:
 
 func _setup_area_settings() -> void:
 	# Hitboxes actively detect hurtboxes but cannot be detected themselves
+	# Put hitboxes on no layer themselves but set the collision_mask to include
+	# the hurtbox layer (layer 2) so overlapping HurtboxComponent areas will be
+	# detected by the Area2D signals.
 	collision_layer = 0
-	collision_mask = 0
+	collision_mask = 1 << 1  # mask to layer 2
 	monitoring = true    # Actively detects hurtboxes
 	monitorable = false  # Cannot be detected by others
 

@@ -26,8 +26,11 @@ func can_use() -> bool:
 	return _cooldown_timer <= 0.0
 
 
-func execute(_target: Node = null) -> void:
-	## Override in subclasses to implement ability logic
+func execute(_target: Node = null, _cursor_world = null) -> void:
+	## Override in subclasses to implement ability logic. Some abilities may
+	## accept an optional cursor_world parameter (world-space Vector2) to
+	## influence targeting. Keep the signature compatible with existing
+	## subclasses by providing a default null value.
 	_start_cooldown()
 	ability_executed.emit()
 
