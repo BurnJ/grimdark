@@ -32,6 +32,7 @@ var _direction_angle_cache: float = PI / 2
 var _is_moving: bool = false
 
 # Combat state - Action Combat (Diablo-style)
+var _attack_target: Node2D = null
 var _right_mouse_held: bool = false
 var _attack_requested: bool = false
 var _last_cursor_world: Vector2 = Vector2.ZERO
