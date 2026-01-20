@@ -28,7 +28,7 @@ func register_ability(ability: AbilityBase) -> void:
 	ability.ability_owner = _owner
 
 
-func use_ability(ability_name: String, target: Node = null) -> bool:
+func use_ability(ability_name: String, target: Node = null, cursor_world: Vector2 = null) -> bool:
 	if not _abilities.has(ability_name):
 		ability_failed.emit(ability_name, "Unknown ability")
 		return false
@@ -42,7 +42,11 @@ func use_ability(ability_name: String, target: Node = null) -> bool:
 	_current_ability = ability
 	ability_started.emit(ability_name)
 
-	ability.execute(target)
+	# Forward optional cursor_world to ability.execute if supported
+	if ability.has_method("execute"):
+		# call with two args if the method accepts cursor_world
+		# many abilities accept only (target), but BasicStrike accepts (target, cursor_world)
+		ability.execute(target, cursor_world)
 
 	_current_ability = null
 	ability_completed.emit(ability_name)

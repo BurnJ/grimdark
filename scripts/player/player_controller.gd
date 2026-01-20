@@ -409,7 +409,9 @@ func _execute_attack() -> void:
 		target_hurtbox = _attack_target.get_node("HurtboxComponent")
 
 	if target_hurtbox:
-		ability_system.use_ability("basic_strike", target_hurtbox)
+		# Pass the last click position as cursor_world so abilities can prefer cursor selection
+		var cursor_pos := final_destination if final_destination != Vector2.ZERO else target_hurtbox.get_center_world()
+		ability_system.use_ability("basic_strike", target_hurtbox, cursor_pos)
 
 	_clear_attack_target()
 
