@@ -238,9 +238,12 @@ func _spawn_enemies_for_chunk(chunk_data: ChunkData) -> void:
 		_player.global_position
 	)
 
-	for enemy in spawned:
-		chunk_data.add_enemy(enemy)
-		enemy.died.connect(_on_enemy_died.bind(chunk_data, enemy))
+		for enemy in spawned:
+			chunk_data.add_enemy(enemy)
+			# Bind only chunk_data here; the enemy instance will be passed by the
+			# signal emit (enemy.died emits the enemy), resulting in two args
+			# matching the signature: _on_enemy_died(chunk_data, enemy)
+			enemy.died.connect(_on_enemy_died.bind(chunk_data))
 
 
 func _on_enemy_died(chunk_data: ChunkData, enemy: Node) -> void:
