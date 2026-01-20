@@ -1,0 +1,10 @@
+[gd_scene format=3 uid="uid://bwrq8e3gh2npc"]
+
+[node name="WorldTileMap" type="Node2D"]
+y_sort_enabled = true
+
+[node name="GroundLayer" type="TileMapLayer" parent="."]
+
+[node name="ObstaclesLayer" type="TileMapLayer" parent="."]
+
+[node name="DecorationLayer" type="TileMapLayer" parent="."]

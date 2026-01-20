@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir /s)",
+      "Bash(dir /s /b *.godot *.tscn *.gd)",
+      "Bash(cd:*)"
+    ]
+  }
+}
