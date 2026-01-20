@@ -31,7 +31,10 @@ func _setup_collision_shape() -> void:
 
 func _setup_area_settings() -> void:
 	# Hurtboxes are passive - they can BE detected but don't detect others
-	collision_layer = 0
+	# Place hurtboxes on layer 2 (entity hurtboxes). They should be monitorable
+	# so active hitboxes (which mask layer 2) can detect them.
+	# Using a dedicated layer avoids interfering with physics bodies on other layers.
+	collision_layer = 1 << 1  # layer 2
 	collision_mask = 0
 	monitorable = true   # Can be detected by hitboxes/AOE areas
 	monitoring = false   # Doesn't actively detect
